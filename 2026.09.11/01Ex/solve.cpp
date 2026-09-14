@@ -1,15 +1,14 @@
 #include "solve.h"
-#include "io_status.h"
 
-io_status
-t1_solve (const char *filename, const int k, int &r)
+int
+t1_solve (const char *filename, const int k)
 {
   const int len_int = sizeof (int) << 3;
   int i, n, len_plot = 0, dist = 0, min = -1;
 
   FILE *fp = fopen (filename, "r");
   if (!fp)
-    return io_status::open;
+    return -2;
 
   while (fscanf (fp, "%d", &n) == 1)
     {
@@ -38,9 +37,6 @@ t1_solve (const char *filename, const int k, int &r)
   if (len_plot >= k && (min * dist < 0 || dist < min))
         min = dist;
 
-  r = min;
-
   fclose (fp);
-
-  return io_status::success;
+  return min;
 }
