@@ -9,14 +9,14 @@ main (int argc, char *argv[])
   int res;
   double t;
 
-  if (!(argc == 3))
+  if (!(argc == 2))
     {
-      printf ("%s : file_a, file_b\n", argv[0]);
+      printf ("%s : filename\n", argv[0]);
       return -2;
     }
 
   t = clock ();
-  res = t2_solve (argv[1], argv[2]);
+  res = t3_solve (argv[1]);
   t = (clock () - t) / CLOCKS_PER_SEC;
 
   if (res < 0)
