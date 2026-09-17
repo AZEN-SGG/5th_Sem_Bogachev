@@ -8,4 +8,4 @@
 
 int t4_solve (const char *filename, double &x);
 
-#endif // SOLVE_H
+#endif /* SOLVE_H */

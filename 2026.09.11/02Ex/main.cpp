@@ -21,7 +21,7 @@ main (int argc, char *argv[])
 
   if (res < 0)
     {
-      fprintf(stderr, "%s : %d\n", argv[0], res);
+      fprintf (stderr, "%s : %d\n", argv[0], res);
       return -1;
     }
 

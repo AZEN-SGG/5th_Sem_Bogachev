@@ -12,7 +12,7 @@ t1_solve (const char *filename, const int k)
 
   while (fscanf (fp, "%d", &n) == 1)
     {
-      /* Ищем первый не нулевой бит, пропускаем ведущие нули.  */
+      /* Find the first nonzero bit, skipping leading zeroes.  */
       for (i = len_int - 1; ((n >> i) & 1) != 1 && i >= 0; i--)
         ;
       for (; i >= 0; i--)
@@ -35,7 +35,7 @@ t1_solve (const char *filename, const int k)
     }
 
   if (len_plot >= k && (min * dist < 0 || dist < min))
-        min = dist;
+    min = dist;
 
   fclose (fp);
   return min;

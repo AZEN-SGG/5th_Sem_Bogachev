@@ -7,4 +7,4 @@
 int gcd (int a, int b);
 void t5_solve (int k, double *arr, const int n);
 
-#endif // SOLVE_H
+#endif /* SOLVE_H */

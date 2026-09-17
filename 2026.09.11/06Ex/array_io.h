@@ -9,4 +9,4 @@ int read_file (const char *filename, const int n, double *&arr);
 int gen_array (const int s, const int n, double *&arr);
 double f (const int s, const int n, const int i);
 
-#endif // ARRAY_IO_H
+#endif /* ARRAY_IO_H */

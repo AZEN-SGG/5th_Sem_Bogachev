@@ -4,7 +4,7 @@ void
 print_array (const int p, const int n, double *arr)
 {
   int k = p < n ? p : n;
-  for (int i = 0 ; i < k ; ++i)
+  for (int i = 0; i < k; ++i)
     fprintf (stdout, "%lf\n", arr[i]);
 
   return;
@@ -23,7 +23,7 @@ read_file (const char *filename, const int n, double *&arr)
   if (!arr)
     return -2;
 
-  for (i = 0 ; i < n && fscanf (fp, "%lf", arr + i) == 1; i++)
+  for (i = 0; i < n && fscanf (fp, "%lf", arr + i) == 1; i++)
     ;
 
   if (i != n)
@@ -38,20 +38,21 @@ read_file (const char *filename, const int n, double *&arr)
 int
 gen_array (const int s, const int n, double *&arr)
 {
-  arr = (double *)malloc (n * sizeof (double)); 
+  arr = (double *)malloc (n * sizeof (double));
   if (!arr)
     return -2;
 
-  for (int i = 0 ; i < n ; ++i)
+  for (int i = 0; i < n; ++i)
     arr[i] = f (s, n, i + 1);
 
   return n;
 }
 
-double f (const int s, const int n, const int i)
+double
+f (const int s, const int n, const int i)
 {
   double val = 0;
-  
+
   switch (s)
     {
     case 1:
@@ -81,4 +82,3 @@ double f (const int s, const int n, const int i)
 
   return val;
 }
-

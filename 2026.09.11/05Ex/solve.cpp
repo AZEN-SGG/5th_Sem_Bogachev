@@ -29,11 +29,11 @@ t5_solve (int k, double *arr, const int n)
   gcd_v = gcd (n, k);
   inv_g = n / gcd_v;
 
-  for (int i = 0 ; i < gcd_v ; ++i)
+  for (int i = 0; i < gcd_v; ++i)
     {
       ind = i;
       last = arr[ind];
-      for (int j = 0 ; j < inv_g ; ++j, ind = next_ind)
+      for (int j = 0; j < inv_g; ++j, ind = next_ind)
         {
           next_ind = (ind + k) % n;
           temp = arr[next_ind];

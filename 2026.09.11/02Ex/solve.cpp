@@ -38,7 +38,6 @@ t2_solve (const char *file_a, const char *file_b)
           break;
         }
 
-
       if (std::abs ((b_curr * 2) - (a_before + a_after)) < EPS)
         {
           ret = 0;

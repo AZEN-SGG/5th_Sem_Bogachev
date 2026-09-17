@@ -7,4 +7,4 @@
 
 int t1_solve (const char *filename, const int k);
 
-#endif // SOLVE_H
+#endif /* SOLVE_H */

@@ -48,7 +48,7 @@ t3_solve (const char *filename)
           else
             type = 1;
         }
-      
+
       if (type == 4 || type == 2)
         {
           if (std::abs (q * a_before - a_curr) > EPS)

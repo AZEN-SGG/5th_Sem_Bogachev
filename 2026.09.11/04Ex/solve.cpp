@@ -11,7 +11,7 @@ t4_solve (const char *filename, double &d)
   if (!fp)
     return -1;
 
-  for (n = 0; fscanf (fp, "%lf", &el) == 1 ; n++, sum += el, sum_sq += el * el)
+  for (n = 0; fscanf (fp, "%lf", &el) == 1; n++, sum += el, sum_sq += el * el)
     ;
 
   d = (sum_sq / n) - ((sum * sum) / (n * n));

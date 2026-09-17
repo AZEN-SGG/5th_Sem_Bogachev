@@ -7,7 +7,7 @@ t6_solve (int k, double *arr, const int n)
   double avg, sum = 0, sum_part = 0;
   int shift = 0, num = 0, num_part = 0;
 
-  for (int i = 1 ; i < n ; ++i)
+  for (int i = 1; i < n; ++i)
     {
       if (arr[i] - arr[i - 1] < EPS)
         {
@@ -31,7 +31,7 @@ t6_solve (int k, double *arr, const int n)
           num_part = 0;
         }
     }
-      
+
   if (num_part + 1 >= k)
     {
       sum_part += arr[n - 1];
@@ -46,12 +46,12 @@ t6_solve (int k, double *arr, const int n)
 
   avg = sum / num;
 
-  for (int i = 0 ; i < n ; ++i)
+  for (int i = 0; i < n; ++i)
     {
       if (avg - arr[i] > EPS)
-          shift++;
+        shift++;
       else
-          arr[i - shift] = arr[i];
+        arr[i - shift] = arr[i];
     }
 
   return n - shift;
