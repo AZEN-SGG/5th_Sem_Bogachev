@@ -35,7 +35,7 @@ t5_solve (int k, double *arr, const int n)
       last = arr[ind];
       for (int j = 0 ; j < inv_g ; ++j, ind = next_ind)
         {
-          next_ind = (ind + inv_g) % n;
+          next_ind = (ind + k) % n;
           temp = arr[next_ind];
           arr[next_ind] = last;
           last = temp;

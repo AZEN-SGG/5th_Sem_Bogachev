@@ -26,7 +26,7 @@ read_file (const char *filename, const int n, double *&arr)
   for (i = 0 ; i < n && fscanf (fp, "%lf", arr + i) == 1; i++)
     ;
 
-  if (i == n)
+  if (i != n)
     return -3;
 
   return n;

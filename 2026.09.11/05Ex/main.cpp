@@ -11,7 +11,7 @@ main (int argc, char *argv[])
   double t, *arr;
 
   if (!((argc == 5 || argc == 6) && sscanf (argv[1], "%d", &k) == 1
-        && sscanf (argv[2], "%d", &n) && sscanf (argv[3], "%d", &p)
+        && sscanf (argv[2], "%d", &n) && n > 0 && sscanf (argv[3], "%d", &p)
         && sscanf (argv[4], "%d", &s) && ((s == 0 && argc == 6) 
           || (s > 0 && s < 7))))
     {
