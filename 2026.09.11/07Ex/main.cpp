@@ -40,6 +40,7 @@ main (int argc, char *argv[])
     fprintf (stderr, "%s : %d\n", argv[0], res);
   else
     fprintf (stdout, "%s : %d\n", argv[0], res);
+  fprintf (stdout, "\nTime = %.2f\n", t);
 
   free (arr);
   return 0;

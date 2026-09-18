@@ -1,4 +1,4 @@
-#include "solve.h"
+#include "solve_02.h"
 
 #include <cstdio>
 
@@ -7,13 +7,13 @@ main (int argc, char *argv[])
 {
   int res;
 
-  if (!(argc == 2))
+  if (!(argc == 3))
     {
-      printf ("%s : filename\n", argv[0]);
+      printf ("%s : file_a, file_b\n", argv[0]);
       return -2;
     }
 
-  res = t3_solve (argv[1]);
+  res = t2_solve (argv[1], argv[2]);
 
   if (res < 0)
     {

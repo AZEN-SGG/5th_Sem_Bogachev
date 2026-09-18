@@ -1,4 +1,4 @@
-#include "solve.h"
+#include "solve_04.h"
 
 #include <cstdio>
 
@@ -6,6 +6,7 @@ int
 main (int argc, char *argv[])
 {
   int res;
+  double d;
 
   if (!(argc == 2))
     {
@@ -13,7 +14,7 @@ main (int argc, char *argv[])
       return -2;
     }
 
-  res = t3_solve (argv[1]);
+  res = t4_solve (argv[1], d);
 
   if (res < 0)
     {
@@ -21,7 +22,7 @@ main (int argc, char *argv[])
       return -1;
     }
 
-  fprintf (stdout, "%s : %d\n", argv[0], res);
+  fprintf (stdout, "%s : %d - %lf\n", argv[0], res, d);
 
   return 0;
 }

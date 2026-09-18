@@ -38,6 +38,7 @@ main (int argc, char *argv[])
   t = (clock () - t) / CLOCKS_PER_SEC;
 
   print_array (p, n, arr);
+  fprintf (stdout, "\nTime = %.2f\n", t);
 
   free (arr);
   return 0;

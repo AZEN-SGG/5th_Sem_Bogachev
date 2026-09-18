@@ -1,19 +1,19 @@
-#include "solve.h"
+#include "solve_01.h"
 
 #include <cstdio>
 
 int
 main (int argc, char *argv[])
 {
-  int res;
+  int res = 0, k;
 
-  if (!(argc == 2))
+  if (!(argc == 3 && sscanf (argv[2], "%d", &k)))
     {
-      printf ("%s : filename\n", argv[0]);
+      printf ("%s : filename k\n", argv[0]);
       return -2;
     }
 
-  res = t3_solve (argv[1]);
+  res = t1_solve (argv[1], k);
 
   if (res < 0)
     {

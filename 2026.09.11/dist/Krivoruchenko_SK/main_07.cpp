@@ -1,5 +1,5 @@
 #include "array_io.h"
-#include "solve.h"
+#include "solve_07.h"
 
 #include <cstdio>
 #include <ctime>
@@ -7,12 +7,11 @@
 int
 main (int argc, char *argv[])
 {
-  int res, k, n, p, s;
+  int res, n, p, s;
   double t, *arr;
 
-  if (!((argc == 5 || argc == 6) && sscanf (argv[1], "%d", &k) == 1
-        && sscanf (argv[2], "%d", &n) && n > 0 && sscanf (argv[3], "%d", &p)
-        && sscanf (argv[4], "%d", &s)
+  if (!((argc == 5 || argc == 6) && sscanf (argv[2], "%d", &n) && n > 0
+        && sscanf (argv[3], "%d", &p) && sscanf (argv[4], "%d", &s)
         && ((s == 0 && argc == 6) || (s > 0 && s < 7))))
     {
       printf ("%s : k n p s [filename]\n", argv[0]);
@@ -34,10 +33,13 @@ main (int argc, char *argv[])
   fprintf (stdout, "\n");
 
   t = clock ();
-  t5_solve (k, arr, n);
+  res = t7_solve (argv[1], arr, n);
   t = (clock () - t) / CLOCKS_PER_SEC;
 
-  print_array (p, n, arr);
+  if (res < 0)
+    fprintf (stderr, "%s : %d\n", argv[0], res);
+  else
+    fprintf (stdout, "%s : %d\n", argv[0], res);
   fprintf (stdout, "\nTime = %.2f\n", t);
 
   free (arr);

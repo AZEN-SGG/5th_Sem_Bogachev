@@ -1,5 +1,5 @@
 #include "array_io.h"
-#include "solve.h"
+#include "solve_06.h"
 
 #include <cstdio>
 #include <ctime>
@@ -34,7 +34,7 @@ main (int argc, char *argv[])
   fprintf (stdout, "\n");
 
   t = clock ();
-  t5_solve (k, arr, n);
+  n = t6_solve (k, arr, n);
   t = (clock () - t) / CLOCKS_PER_SEC;
 
   print_array (p, n, arr);

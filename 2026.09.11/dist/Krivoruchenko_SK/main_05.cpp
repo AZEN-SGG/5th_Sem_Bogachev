@@ -1,5 +1,5 @@
 #include "array_io.h"
-#include "solve.h"
+#include "solve_05.h"
 
 #include <cstdio>
 #include <ctime>

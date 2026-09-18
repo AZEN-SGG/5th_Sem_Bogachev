@@ -1,4 +1,5 @@
 #include "array_io.h"
+#include <cstdio>
 
 void
 print_array (const int p, const int n, double *arr)
@@ -21,7 +22,10 @@ read_file (const char *filename, const int n, double *&arr)
 
   arr = (double *)malloc (n * sizeof (double));
   if (!arr)
-    return -2;
+    {
+      fclose (fp);
+      return -2;
+    }
 
   for (i = 0; i < n && fscanf (fp, "%lf", arr + i) == 1; i++)
     ;
@@ -29,9 +33,11 @@ read_file (const char *filename, const int n, double *&arr)
   if (i != n)
     {
       free (arr);
+      fclose (fp);
       return -3;
     }
 
+  fclose (fp);
   return n;
 }
 
