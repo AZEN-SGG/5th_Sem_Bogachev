@@ -1,42 +1,37 @@
-WFLAGS = -fstack-protector-all -W -Wall -Wextra -Wunused \
--Wempty-body -Wlogical-op -Wold-style-declaration -Wmissing-parameter-type \
--Wignored-qualifiers -Winit-self -Wshadow -Wtype-limits \
--Wpointer-arith -Wformat-security -Wmissing-format-attribute -Wformat=1 \
--Wdeclaration-after-statement -Wbad-function-cast -Wnested-externs \
--Wmissing-prototypes -Wmissing-declarations -Wold-style-definition \
--Wcast-align -Werror -pedantic -pedantic-errors -Wfloat-equal \
--Wwrite-strings -Wno-long-long -std=gnu99 -Wstrict-prototypes \
--Wmissing-field-initializers -Wpointer-sign
+WFLAGS = -O3 -mfpmath=sse -fstack-protector-all -g \
+-W -Wall -Wextra -Wunused -Wcast-align -Werror -pedantic -pedantic-errors \
+-Wfloat-equal -Wpointer-arith -Wformat-security -Wmissing-format-attribute \
+-Wformat=1 -Wwrite-strings -Wno-long-long -Woverloaded-virtual \
+-Wnon-virtual-dtor -Wcast-qual -Wno-suggest-attribute=format -std=c++14
 
-LDFLAGS = -std=gnu99 -mfpmath=sse -O3
-LDLIBS = -lm
+LINK_FLAGS ?=
 
 ifeq ($(OS),Windows_NT)
 	EXE = exe
 	CLEAN = del
-	LDLIBS += -lssp
 else
 	EXE = out
 	CLEAN = rm -f
 endif
 
-TARGET = a05.$(EXE)
-OBJ = main.o solve.o 
+TARGET = a.$(EXE)
+OBJ = main.o solve.o
 
-%.o: %.c
-	gcc $(WFLAGS) $(LDFLAGS) -c $< -o $@
+%.o: %.cpp
+	g++ $(WFLAGS) -c $< -o $@
 
 $(TARGET): $(OBJ)
-	gcc $^ -o $@ $(LDLIBS)
+	g++ $(WFLAGS) $(LINK_FLAGS) $^ -o $@
 
-# Отладочная сборка (gdb)
-gdb: LDFLAGS = -std=gnu99 -mfpmath=sse -g -O0
+static: 
+	$(MAKE) LINK_FLAGS="-static"
+
+gdb: WFLAGS = -mfpmath=sse -fstack-protector-all -O0 -g3 -fno-inline -Wall -Wextra -Werror -std=c++14
 gdb: clean $(TARGET)
 
-# Профилировочная сборка (gprof)
-prof: LDFLAGS += -pg
-prof: LDLIBS += -pg
+prof: WFLAGS += -pg
 prof: clean $(TARGET)
 
-clean:
+clean celan:
 	$(CLEAN) *.o *.$(EXE)
+

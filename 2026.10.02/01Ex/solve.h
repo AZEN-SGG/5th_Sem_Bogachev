@@ -4,9 +4,8 @@
 #include <cfloat>
 #include <cmath>
 
-#define MAX_ITER 30
+#define NUM_FPE 1e-300
 
-int t4_solve (double (*f) (double), double a, double b, double eps,
-              double *res);
+double t1_solve (double (*f) (double), double a, double b, int n);
 
 #endif
