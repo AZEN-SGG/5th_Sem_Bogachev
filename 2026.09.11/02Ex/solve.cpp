@@ -1,10 +1,11 @@
 #include "solve.h"
+#include <cstdio>
 
 int
 t2_solve (const char *file_a, const char *file_b)
 {
   int ret;
-  double a_before, a_curr, a_after, b_curr;
+  double a_before, a_curr, a_after, b_curr, b_after;
 
   FILE *fp_b, *fp_a = fopen (file_a, "r");
   if (!fp_a)
@@ -18,27 +19,27 @@ t2_solve (const char *file_a, const char *file_b)
     }
 
   if (!(fscanf (fp_a, "%lf", &a_before) && fscanf (fp_a, "%lf", &a_curr)
-        && fscanf (fp_b, "%lf", &b_curr)))
+        && fscanf (fp_b, "%lf", &b_curr) && fscanf(fp_b, "%lf", &b_curr)))
     {
       fclose (fp_a);
       fclose (fp_b);
-      return -2;
+      return 1;
     }
 
   while (1)
     {
-      if (fscanf (fp_b, "%lf", &b_curr) != 1)
+      if (fscanf (fp_b, "%lf", &b_after) != 1)
         {
           ret = 1;
           break;
         }
       if (fscanf (fp_a, "%lf", &a_after) != 1)
         {
-          ret = -3;
+          ret = -2;
           break;
         }
 
-      if (std::abs ((b_curr * 2) - (a_before + a_after)) < EPS)
+      if (std::abs ((b_curr * 2) - (a_before + a_after)) > EPS)
         {
           ret = 0;
           break;
@@ -46,6 +47,7 @@ t2_solve (const char *file_a, const char *file_b)
 
       a_before = a_curr;
       a_curr = a_after;
+      b_curr = b_after;
     }
 
   fclose (fp_a);

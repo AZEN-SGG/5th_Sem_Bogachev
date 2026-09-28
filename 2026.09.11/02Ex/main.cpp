@@ -9,7 +9,7 @@ main (int argc, char *argv[])
 
   if (!(argc == 3))
     {
-      printf ("%s : file_a, file_b\n", argv[0]);
+      fprintf (stderr, "%s : file_a file_b\n", argv[0]);
       return -2;
     }
 
