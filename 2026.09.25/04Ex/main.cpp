@@ -20,7 +20,7 @@ main (int argc, char *argv[])
         && sscanf (argv[2], "%lf", &b) == 1 && (a <= b)
         && (sscanf (argv[3], "%lf", &eps) == 1 && (eps >= 0))
         && ((sscanf (argv[4], "%d", &m) == 1) && m > 0)
-        && ((sscanf (argv[5], "%d", &k) == 1) && ((0 <= k) && (k <= len_f)))))
+        && ((sscanf (argv[5], "%d", &k) == 1) && ((0 <= k) && (k < len_f)))))
     {
       fprintf (stderr, "Usage: %s a b eps M k\n", argv[0]);
       return -1;

@@ -1,6 +1,9 @@
 #ifndef INIT_F_H
 #define INIT_F_H
 
+#include <cfloat>
+#include <cmath>
+
 int get_call_function_count (void);
 int get_call_derivative_count (void);
 
