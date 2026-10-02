@@ -14,6 +14,12 @@ t4_solve (const char *filename, double &d)
   for (n = 0; fscanf (fp, "%lf", &el) == 1; n++, sum += el, sum_sq += el * el)
     ;
 
+  if (!feof (fp))
+    {
+      fclose (fp);
+      return -2;
+    }
+
   if (n)
     d = (sum_sq / n) - ((sum * sum) / (n * n));
   else

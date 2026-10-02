@@ -18,8 +18,10 @@ t2_solve (const char *file_a, const char *file_b)
       return -1;
     }
 
-  if (!(fscanf (fp_a, "%lf", &a_before) && fscanf (fp_a, "%lf", &a_curr)
-        && fscanf (fp_b, "%lf", &b_curr) && fscanf(fp_b, "%lf", &b_curr)))
+  if (!((fscanf (fp_a, "%lf", &a_before) == 1)
+        && (fscanf (fp_a, "%lf", &a_curr) == 1)
+        && (fscanf (fp_b, "%lf", &b_curr) == 1)
+        && (fscanf (fp_b, "%lf", &b_curr) == 1)))
     {
       fclose (fp_a);
       fclose (fp_b);
@@ -30,7 +32,10 @@ t2_solve (const char *file_a, const char *file_b)
     {
       if (fscanf (fp_b, "%lf", &b_after) != 1)
         {
-          ret = 1;
+          if (!feof (fp_b))
+            ret = -3;
+          else
+            ret = 1;
           break;
         }
       if (fscanf (fp_a, "%lf", &a_after) != 1)
@@ -39,7 +44,7 @@ t2_solve (const char *file_a, const char *file_b)
           break;
         }
 
-      if (std::abs ((b_curr * 2) - (a_before + a_after)) < EPS)
+      if (std::abs ((b_curr * 2) - (a_before + a_after)) > EPS)
         {
           ret = 0;
           break;
