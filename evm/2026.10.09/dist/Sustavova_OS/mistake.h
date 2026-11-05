@@ -1,0 +1,1 @@
+double mistake (double *a, double *b, double *hight, double *pc, int n, int m);

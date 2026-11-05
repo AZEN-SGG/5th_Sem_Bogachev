@@ -1,0 +1,15 @@
+abc
+xabc
+abcx
+xabcx
+x abc word
+x	abc word
+ac
+abbc
+abbbc
+a.c
+a?c
+a+c
+a*c
+bbc
+cbc

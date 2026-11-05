@@ -1,0 +1,1 @@
+void reduce_sum(int p, double* a = nullptr, int n = 0);

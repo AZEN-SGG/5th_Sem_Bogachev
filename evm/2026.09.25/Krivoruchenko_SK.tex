@@ -1,0 +1,1315 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[english,russian]{babel}
+\usepackage[T2A]{fontenc}
+\usepackage[
+  a4paper, mag=1000, includefoot,
+  left=1.1cm, right=1.1cm, top=1.2cm, bottom=1.2cm, headsep=0.8cm, footskip=0.8cm
+]{geometry}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{times}
+\usepackage{mathptmx}
+\usepackage{listings}
+\usepackage{xcolor}
+
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+\IfFileExists{pscyr.sty}
+{
+  \usepackage{pscyr}
+  \def\rmdefault{ftm}
+  \def\sfdefault{ftx}
+  \def\ttdefault{fer}
+  \DeclareMathAlphabet{\mathbf}{OT1}{ftm}{bx}{it} % bx/it or bx/m
+}
+
+\mathsurround=0.1em
+\clubpenalty=1000%
+\widowpenalty=1000%
+\brokenpenalty=2000%
+\frenchspacing%
+\tolerance=2500%
+\hbadness=1500%
+\vbadness=1500%
+\doublehyphendemerits=50000%
+\finalhyphendemerits=25000%
+\adjdemerits=50000%
+
+
+\begin{document}
+\renewcommand{\theequation}{1.\arabic{equation}}
+\author{Сергей Криворученко}
+\title{Метод Холецкого решения линейной системы с симметричной матрицей}
+\date{\today}
+\maketitle
+
+\begin{center}
+{\bfseries \Large\underline{Постановка задачи}}
+\end{center}
+
+Дана симметричная матрица $A$ и вектор $b$ ищем решение системы $Ax = b$
+
+$$
+A=
+  \begin{pmatrix}
+    a_{11}& a_{12} &\ldots & a_{1n} \\
+    a_{12}& a_{22} &\ldots & a_{2n} \\
+    \vdots& \vdots &\ddots & \vdots\\
+    a_{1n}& a_{2n} &\ldots & a_{nn}
+  \end{pmatrix}
+\qquad
+b=
+  \begin{pmatrix}
+    b_{1} \\
+    b_{2} \\
+    \vdots \\
+    b_{n}
+  \end{pmatrix}
+$$
+Представим матрицу в виде:
+$$
+\begin{gathered}
+A=R^T D R, \\
+\text{где } R=
+\begin{pmatrix}
+    R_{11}^{m \times m} & R_{12}^{m \times m} & \cdots & R_{1k}^{m \times m} & R_{1k+1}^{m \times l} \\
+    0 & R_{22}^{m \times m} & \cdots & R_{2k}^{m \times m} & R_{2k+1}^{m \times l} \\
+    \vdots & \vdots & \ddots & \vdots & \vdots \\
+    0 & 0 & \cdots & R_{kk}^{m \times m} & R_{kk+1}^{m \times l} \\
+    0 & 0 & \cdots & 0 & R_{k+1k+1}^{l \times l}
+\end{pmatrix},
+\qquad
+D=
+\begin{pmatrix}
+  D_{11}^{m \times m} & 0 & \cdots & 0 & 0 \\
+  0 & D_{22}^{m \times m} & \cdots & 0 & 0 \\
+  \vdots & \vdots & \ddots & \vdots & \vdots \\
+  0 & 0 & \cdots & D_{kk}^{m \times m} & 0 \\
+  0 & 0 & \cdots & 0 & D_{k+1k+1}^{l \times l}
+\end{pmatrix} \\
+\text{где $R_{ii}$ - верхнетреугольная матрица, а $D_{ii}$ - диагональная матрица с $\pm1$ на диагонали}
+\end{gathered}
+$$
+
+$m$ - заданный размер блока матрицы, а $l$ - остаток от деления $n$ на $m$
+
+\section{Хранение}
+
+\subsection{Способы хранения}
+
+Хранить матрицы будем одномерными массивами длины
+$k \times l$, $\frac{n(n+1)}{2}$ и $n$
+
+\medskip
+
+Матрица $A$ хранится по строкам. В силу симметрии сохраняется только
+верхний треугольник, поэтому размер массива равен
+$$
+\frac{n(n+1)}{2}
+$$
+
+Блок $A_{ij}$ также хранится по строкам, но целиком, в массиве размера
+$o \times p$, где
+$$
+o =
+\begin{cases}
+  l, & i = k+1, \\
+  m, & i \leq k
+\end{cases}
+\qquad
+p =
+\begin{cases}
+  l, & j = k+1, \\
+  m, & j \leq k
+\end{cases}
+$$
+
+\medskip
+
+Матрица $R$ хранится по столбцам. Это можно рассматривать как
+хранение $R^T$ по строкам. Сохраняется только верхний треугольник
+в массиве размера
+$$
+\frac{n(n+1)}{2}
+$$
+
+Блок $R_{ij}$, аналогично $A_{ij}$, хранится целиком даже при
+$i=j$, поскольку экономия памяти в данном случае не оправдывает
+дополнительные вычисления. Элементы блока записываются по столбцам
+
+\medskip
+
+Диагональная матрица $D$ хранится в массиве типа \texttt{int}
+размера $n$. В массив записываются только диагональные элементы
+
+\medskip
+
+Доступ к элементам зависит от порядка хранения и размера массива
+
+\medskip
+\noindent
+\textbf{Массив размера $o \times p$}
+
+Для $1 \leq i \leq o$, $1 \leq j \leq p$:
+$$
+\begin{aligned}
+  \text{по строкам:}\qquad
+  a[(i-1)p+j-1] &= a_{ij}, \\
+  \text{по столбцам:}\qquad
+  a[(j-1)o+i-1] &= a_{ij}
+\end{aligned}
+$$
+
+\medskip
+\noindent
+\textbf{Массив размера $\frac{n(n+1)}{2}$}
+
+Для $1 \leq i \leq j \leq n$:
+$$
+\begin{aligned}
+  \text{по строкам:}\qquad
+  a\left[(i-1)n-\frac{i(i-1)}{2}+j-1\right]
+  &= a_{ij}, \\
+  \text{по столбцам:}\qquad
+  a\left[\frac{j(j-1)}{2}+i-1\right]
+  &= a_{ij}
+\end{aligned}
+$$
+
+\medskip
+\noindent
+\textbf{Массив размера $n$}
+
+Для $1 \leq i \leq n$:
+$$
+a[i-1] = a_{ii}
+$$
+
+\subsection{Чтение / Запись блоков}
+
+Для операций с блоками будем вызывать функции
+
+void get\_block\_row (const double* a, double *b, const int n, const int m, const int l, int si, int sj);
+
+void set\_block\_row (double* a, const double *b, const int n, const int m, const int l, int si, int sj);
+
+void get\_block\_column (const double* a, double *b, const int n, const int m, const int l, int si, int sj);
+
+void set\_block\_column (double* a, const double *b, const int n, const int m, const int l, int si, int sj);
+
+a - указатель на матрицу
+
+b - указатель на массив для блока
+
+si, sj - указатели на начало блока
+
+n - размер матрицы
+
+m - высота блока
+
+l - ширина блока
+
+\begin{lstlisting}[language=C++,
+                   tabsize=4,
+                   stepnumber=1,
+                   breaklines=true,
+                   numbers=left,
+                   backgroundcolor=\color{backcolour},
+                   basicstyle=\ttfamily\small,
+                   columns=fullflexible,
+                   keepspaces=true,
+                   numbersep=8pt,
+                   lineskip=1pt
+                  ]
+void get_block_row (const double *a, double *b, const int n, const int m, const int l, int si, int sj)
+{
+  if (si < sj)
+    for (int i = 0; i < m; ++i)
+      {
+        int row = si + i;
+        
+        int pos = row * n - (row * (row + 1) >> 1) + sj;
+        
+        std::memcpy (b + i * l, a + pos, l * sizeof(double));
+      }
+  else if (si == sj)
+    for (int i = 0; i < m; ++i)
+      {
+        int row = si + i;
+        int pos = row * n - (row * (row + 1) >> 1) + row;
+        int len = m - i;
+        
+        memcpy(b + i * m + i, a + pos, len * sizeof(double));
+        
+        for (int j = 0; j < i; ++j)
+          b[i * m + j] = b[j * m + i];
+      }
+}
+
+void set_block_row (double *a, const double *b, const int n, const int m, const int l, int si, int sj)
+{
+  if (si < sj)
+    for (int i = 0; i < m; ++i)
+      {
+        int row = si + i;
+        
+        int pos = row * n - (row * (row + 1) >> 1) + sj;
+        
+        std::memcpy (a + pos, b + i * l, l * sizeof(double));
+      }
+  else if (si == sj)
+    for (int i = 0; i < m; ++i)
+      {
+        int row = si + i;
+
+        int pos = row * n - (row * (row + 1) >> 1) + row;
+
+        int len = m - i;
+        
+        memcpy(a + pos, b + i * l + i, len * sizeof(double));
+      }
+}
+
+void get_block_column (const double *a, double *b, const int n, const int m, const int l, int si, int sj)
+{
+  if (si < sj)
+    for (int j = 0; j < l; ++j)
+      {
+        int column = sj + j;
+        
+        int pos = (column * (column + 1) >> 1) + si;
+        
+        std::memcpy (b + j * m, a + pos, m * sizeof(double));
+      }
+  else if (si == sj)
+    for (int j = 0; j < l; ++j)
+      {
+        int column = sj + j;
+        
+        int pos = (column * (column + 1) >> 1) + si;
+        
+        memcpy(b + j * m, a + pos, (j + 1) * sizeof(double));
+        memset(b + j * m + j + 1, 0, (l - j - 1) * sizeof(double));
+      }
+}
+
+void set_block_column (double *a, const double *b, const int n, const int m, const int l, int si, int sj)
+{
+  if (si < sj)
+    for (int j = 0; j < l; ++j)
+      {
+        int column = sj + j;
+        
+        int pos = (column * (column + 1) >> 1) + si;
+        
+        std::memcpy (a + pos, b + j * m, m * sizeof(double));
+      }
+  else if (si == sj)
+    for (int j = 0; j < l; ++j)
+      {
+        int column = sj + j;
+        
+        int pos = (column * (column + 1) >> 1) + si;
+        
+        memcpy(a + pos, b + j * m, (j + 1) * sizeof(double));
+      }
+}
+\end{lstlisting}
+
+\section{Алгоритм}
+
+\subsection{Преобразование матрицы}
+
+Представим матрицу $A$ в виде
+
+$$
+A = R^T D R
+$$
+
+Поделим матрицу на $(k+1) \times (k+1)$ блоков
+
+Рассмотрим первый диагональный блок:
+
+$$
+A_{11} = R_{11}^T D_{11} R_{11}
+$$
+
+
+\subsubsection{Обычный метод Холецкого}
+
+Матрица $A_{11}^{m \times m}$ симметрична, значит её можно представить
+в аналогичном виде
+
+Для $1 \leq i \leq j \leq m$:
+
+$$
+\left[
+\begin{aligned}
+  d_{ii} &= \operatorname{sign}(a_{ii} - \sum_{k=1}^{i-1} r_{ki}^2 d_{kk}) \\
+  r_{ii} &= \sqrt{\left| a_{ii} - \sum_{k=1}^{i-1} r_{ki}^2 d_{kk} \right|} \\
+  r_{ij} &= \frac{a_{ij} - \sum_{k=1}^{i-1} r_{ki} r_{kj} d_{kk}}{r_{ii} d_{ii}}
+\end{aligned}
+\right.
+$$
+
+Таким образом найдём матрицы $R_{11}$ и $D_{11}$
+
+
+\subsubsection{Поиск блоков}
+
+Рассмотрим блоки первой блочной строки
+
+Для $2 \leq j \leq k$:
+
+$$
+A_{1j}^{m \times m} = R_{11}^T D_{11} R_{1j}
+$$
+
+Для $1 \leq i, s \leq m$:
+
+$$
+(A_{1j})_{is}
+=
+\sum_{t=1}^{i-1}
+(R_{11})_{ti} (R_{1j})_{ts} d_{tt}
++
+(R_{11})_{ii} (R_{1j})_{is} d_{ii}
+$$
+
+Отсюда
+
+$$
+(R_{1j})_{is}
+=
+\frac{
+  (A_{1j})_{is}
+  -
+  \sum_{t=1}^{i-1}
+  (R_{11})_{ti} (R_{1j})_{ts} d_{tt}
+}{
+  (R_{11})_{ii} d_{ii}
+}.
+$$
+
+Для $R_{1k+1}^{m \times l}$ вычисления аналогичны. Отличается только
+размерность матрицы:
+
+$$
+A_{1k+1}^{m \times l}
+=
+(R_{11}^T)^{m \times m}
+\cdot
+D_{11}^{m \times m}
+\cdot
+R_{1k+1}^{m \times l}.
+$$
+
+Таким образом получим
+
+$$
+R_{11}^{m \times m},
+\ldots,
+R_{1k}^{m \times m}
+\text{ и }
+R_{1k+1}^{m \times l}.
+$$
+
+
+\medskip
+
+\textbf{Общий случай}
+
+Далее мы движемся построчно сверху-вниз, вычисляя каждую строку слева-направо шаг за шагом, аналогично предыдущему блоку
+
+Рассмотрим $R_{ij}$, где $1 \leq i \leq j \leq k+1$
+
+$$
+A^{n \times n}
+=
+(R^T)^{n \times n}
+\cdot
+D^{n \times n}
+\cdot
+R^{n \times n}
+$$
+
+$$
+\begin{aligned}
+  \text{где } A &=
+  \begin{pmatrix}
+    A_{11}^{m \times m}& A_{12}^{m \times m} &\ldots & A_{1i}^{m \times m} &\ldots & \vline & A_{1j}^{m \times m} & \vline &\ldots & A_{1k+1}^{m \times l} \\
+    (A_{12}^{m \times m})^T& A_{22}^{m \times m} &\ldots & A_{2i}^{m \times m} &\ldots & \vline & A_{2j}^{m \times m} & \vline &\ldots & A_{2k+1}^{m \times l} \\
+    \vdots& \vdots &\ddots & \vdots &\ddots & \vline & \vdots & \vline &\ddots & \vdots \\
+    \hline
+    (A_{1i}^{m \times m})^T& (A_{2i}^{m \times m})^T &\ldots & A_{ii}^{m \times m} &\ldots & \vline & A_{ij}^{m \times m} & \vline &\ldots & A_{ik+1}^{m \times l} \\
+    \hline
+    \vdots& \vdots &\ddots & \vdots &\ddots & \vline & \vdots & \vline &\ddots & \vdots \\
+    (A_{1j}^{m \times m})^T& (A_{2j}^{m \times m})^T &\ldots & (A_{ij}^{m \times m})^T &\ldots & \vline & A_{jj}^{m \times m} & \vline &\ldots & A_{jk+1}^{m \times l} \\
+    \vdots& \vdots &\ddots & \vdots &\ddots & \vline & \vdots & \vline &\ddots & \vdots \\
+    (A_{1k+1}^{m \times l})^T& (A_{2k+1}^{m \times l})^T &\ldots & (A_{ik+1}^{m \times l})^T &\ldots & \vline & (A_{jk+1}^{m \times l})^T & \vline &\ldots & A_{k+1k+1}^{l \times l}
+  \end{pmatrix} \\
+  R^T &=
+  \begin{pmatrix}
+    (R_{11}^{m \times m})^T & 0 & \cdots & 0 & \cdots & 0 \\
+    (R_{12}^{m \times m})^T & (R_{22}^{m \times m})^T & \cdots & 0 & \cdots & 0 \\
+    \vdots & \vdots & \ddots & \vdots & \ddots & \vdots \\
+    \hline
+    (R_{1i}^{m \times m})^T & (R_{2i}^{m \times m})^T & \cdots & (R_{ii}^{m \times m})^T & \cdots & 0 \\
+    \hline
+    \vdots & \vdots & \ddots & \vdots & \ddots & \vdots \\
+    (R_{1k+1}^T)^{l \times m} & (R_{2k+1}^T)^{l \times m} & \cdots & (R_{ik+1}^T)^{l \times m} & \cdots & (R_{k+1k+1}^T)^{l \times l}
+  \end{pmatrix} \\
+  D \cdot R &=
+  \begin{pmatrix}
+    D_{11}^{m \times m} R_{11}^{m \times m} & D_{11}^{m \times m} R_{12}^{m \times m} & \cdots & \vline & D_{11}^{m \times m} R_{1j}^{m \times m} & \vline & \cdots & D_{11}^{m \times m} R_{1k+1}^{m \times l} \\
+    0 & D_{22}^{m \times m} R_{22}^{m \times m} & \cdots & \vline & D_{22}^{m \times m} R_{2j}^{m \times m} & \vline & \cdots & D_{22}^{m \times m} R_{2k+1}^{m \times l} \\
+    \vdots & \vdots & \ddots & \vline & \vdots & \vline & \ddots & \vdots \\
+    0 & 0 & \cdots & \vline & D_{jj}^{m \times m} R_{jj}^{m \times m} & \vline & \cdots & D_{jj}^{m \times m} R_{jk+1}^{m \times l} \\
+    \vdots & \vdots & \ddots & \vline & \vdots & \vline & \ddots & \vdots \\
+    0 & 0 & \cdots & \vline & 0 & \vline & \cdots & D_{k+1k+1}^{l \times l} R_{k+1k+1}^{l \times l}
+  \end{pmatrix}
+\end{aligned}
+$$
+
+Из произведения блоков следует:
+
+$$
+A_{ij}^{o \times p}
+=
+\sum_{t=1}^{\operatorname{min}(i, j)}
+(R_{ti}^T)^{o \times o_t}
+\cdot
+D_{tt}^{o_t \times o_t}
+\cdot
+R_{tj}^{o_t \times p}
+$$
+
+Поскольку $i \leq j$, выделим слагаемое при $t=i$:
+
+$$
+R_{ii}^T \cdot D_{ii} \cdot R_{ij}
+=
+A_{ij}
+-
+\sum_{t=1}^{i-1}
+R_{ti}^T \cdot D_{tt} \cdot R_{tj}
+=
+Y
+$$
+
+Произведения
+
+$$
+R_{ti}^T \cdot D_{tt} \cdot R_{tj}
+$$
+
+к этому моменту уже вычислены на предыдущих шагах.
+
+Поэтому ещё при получении $R_{tj}$ можно сразу вычитать произведения из соответствующих нижних блоков матрицы $A$. Чуть ниже мы рассмотрим это поподробнее
+
+
+В результате для поиска $R_{ij}$ необходимо решить
+
+$$
+R_{ii}^T \cdot D_{ii} \cdot R_{ij} = Y
+$$
+
+Матрицу $R_{ij}$ можно найти по той же схеме, что и $R_{1j}$:
+
+$$
+(R_{ij})_{rs}
+=
+\frac{
+  (Y_{ij})_{rs}
+  -
+  \sum_{t=1}^{r-1}
+  (R_{ii})_{tr} (R_{ij})_{ts} d_{tt}
+}{
+  (R_{ii})_{rr} d_{rr}
+}
+$$
+
+После получения блока $R_{ij}$, нужно вычесть его из нижних зависимых блоков, для этого последовательно рассматриваем все блоки
+$A_{rj}$, где
+$$
+i < r \leq j
+$$
+
+Из каждого блока $A_{rj}$ вычитаем произведение
+$$
+R_{ir}^{T} \cdot D_{ii} \cdot R_{ij},
+$$
+то есть выполняем обновление
+$$
+A_{rj}
+\leftarrow
+A_{rj}
+-
+R_{ir}^{T} \cdot D_{ii} \cdot R_{ij}
+$$
+
+Произведение за счёт диагональности $D$ вычисляем таким образом:
+
+$$
+(R_{ir}^{T} \cdot D_{ii} \cdot R_{ij})_{pq} = \sum_{t = 1}^{m} (R_{ir})_{tp} (R_{ij})_{tq} (D_{ii})_{tt} 
+$$
+
+При $i=j$ матрицы $R_{ii}$ и $D_{ii}$ вычисляются методом Холецкого,
+описанным выше
+
+Вычитание в данном случае не требуется, так как ниже $R_{ii}$ нет ненулевых матриц
+
+Таким образом последовательно вычисляются блоки матриц $R$ и $D$
+
+После завершения алгоритма получаем искомое разложение
+$$
+A = R^{T} \cdot D \cdot R.
+$$
+
+\subsection{Поиск решения}
+
+Имеем систему линейных уравнений
+
+$$
+(R^T \cdot D \cdot R)x = b
+$$
+
+Разобьём решение системы на три шага:
+
+\begin{enumerate}
+  \item $R^T z = b$;
+  \item $D y = z$;
+  \item $R x = y$
+\end{enumerate}
+
+
+\subsubsection{Шаг 1}
+
+Решим систему
+
+$$
+R^T z = b.
+$$
+
+В блочном виде:
+
+$$
+\begin{pmatrix}
+  (R_{11}^{m \times m})^T & 0 & \cdots & 0 & \cdots & 0 \\
+  (R_{12}^{m \times m})^T & (R_{22}^{m \times m})^T & \cdots & 0 & \cdots & 0 \\
+  \vdots & \vdots & \ddots & \vdots & \ddots & \vdots \\
+  \hline
+  (R_{1i}^{m \times m})^T & (R_{2i}^{m \times m})^T & \cdots & (R_{ii}^{m \times m})^T & \cdots & 0 \\
+  \hline
+  \vdots & \vdots & \ddots & \vdots & \ddots & \vdots \\
+  (R_{1k+1}^T)^{l \times m} & (R_{2k+1}^T)^{l \times m} & \cdots & (R_{ik+1}^T)^{l \times m} & \cdots & (R_{k+1k+1}^T)^{l \times l}
+\end{pmatrix}
+\cdot
+\begin{pmatrix}
+  z_1 \\
+  z_2 \\
+  \vdots \\
+  z_i \\
+  \vdots \\
+  z_{k+1}
+\end{pmatrix}
+=
+\begin{pmatrix}
+  b_1 \\
+  b_2 \\
+  \vdots \\
+  b_i \\
+  \vdots \\
+  b_{k+1}
+\end{pmatrix}
+$$
+
+Сначала рассматриваем первый блок:
+
+$$
+R_{11}^T z_1 = b_1,
+$$
+
+где $R_{11}^T$ является нижнетреугольной матрицей
+
+Для первого элемента:
+
+$$
+(z_1)_1
+=
+\frac{(b_1)_1}{(R_{11}^T)_{11}}
+$$
+
+Для произвольного элемента:
+
+$$
+(b_1)_i
+=
+\sum_{t=1}^{i}
+(R_{11}^T)_{it}(z_1)_t
+$$
+
+Последовательно вычитая уже известные слагаемые, получаем
+
+$$
+(z_1)_i
+=
+\frac{
+  (b_1)_i
+  -
+  \sum_{t=1}^{i-1} (R_{11}^T)_{it} (z_1)_t
+}{
+  (R_{11}^T)_{ii}
+}.
+$$
+
+В результате получим вектор $z_1^m$
+
+\medskip
+
+Теперь рассмотрим общий случай. При вычислении сверху вниз имеем
+
+$$
+\sum_{t=1}^{i} R_{ti}^T z_t = b_i
+$$
+
+Произведения $R_{ti}^T z_t$ для $1 \leq t \leq i-1$ уже известны,
+поэтому остаётся решить
+
+$$
+R_{ii}^T z_i
+=
+b_i
+-
+\sum_{t=1}^{i-1} R_{ti}^T z_t.
+$$
+
+Это система с нижнетреугольной матрицей $R_{ii}^T$, поэтому она
+решается аналогично случаю $R_{11}^T z_1=b_1$
+
+Таким образом последовательно получим
+
+$$
+z_1^m,\ldots,z_k^m,z_{k+1}^l,
+$$
+
+а значит и весь вектор $z^n$
+
+
+\subsubsection{Шаг 2}
+
+Решаем
+
+$$
+Dy=z
+$$
+
+Так как $D$ диагональная матрица с элементами $\pm1$, вычисление
+выполняется непосредственно:
+
+$$
+y_i = D_{ii} \cdot z_i
+$$
+
+
+\subsubsection{Шаг 3}
+
+Решаем систему
+
+$$
+Rx=y
+$$
+
+В блочном виде:
+
+$$
+\begin{pmatrix}
+  R_{11}^{m \times m} & R_{12}^{m \times m} & \cdots & R_{1i}^{m \times m} & \cdots & R_{1k+1}^{m \times l} \\
+  0 & R_{22}^{m \times m} & \cdots & R_{2i}^{m \times m} & \cdots & R_{2k+1}^{m \times l} \\
+  \vdots & \vdots & \ddots & \vdots & \ddots & \vdots \\
+  \hline
+  0 & 0 & \cdots & R_{ii}^{m \times m} & \cdots & R_{ik+1}^{m \times l} \\
+  \hline
+  \vdots & \vdots & \ddots & \vdots & \ddots & \vdots \\
+  0 & 0 & \cdots & 0 & \cdots & R_{k+1k+1}^{l \times l}
+\end{pmatrix}
+\cdot
+\begin{pmatrix}
+  x_1 \\
+  x_2 \\
+  \vdots \\
+  x_i \\
+  \vdots \\
+  x_{k+1}
+\end{pmatrix}
+=
+\begin{pmatrix}
+  y_1 \\
+  y_2 \\
+  \vdots \\
+  y_i \\
+  \vdots \\
+  y_{k+1}
+\end{pmatrix}
+$$
+
+Вычисления аналогичны шагу 1. Отличие состоит в направлении обхода:
+поскольку $R$ верхнетреугольная, неизвестные вычисляются снизу вверх
+
+В результате получим вектор $x^n$, являющийся решением исходной
+системы
+
+\section{Оценка сложности}
+
+\begin{enumerate}
+  \item Количество операций на нахождение матриц $R_{11}$ и $D_{11}$ по формулам, приведенным в первом шаге
+
+  Для нахождения суммы вида $\sum_{s = 1}^{i - 1} a b$ нужно $(i - 1) + (i - 2)$ действий
+
+  Таким образом для вычисления $r_{ij}$ и $r_{ii}$ требуется $2i - 2$ операций
+
+  А всего нужно
+
+  $$\sum_{i = 1}^{m} (m + 1 - i) (2i - 2) = 2\sum_{t = 0}^{m - 1} (mt + t^2) = m^2 (m - 1) + \frac{2m^3 - 3m^2 + m}{6} = \frac{4}{3} m^3 - \frac{3}{2} m^2 + \frac{1}{6} m$$
+\end{enumerate}
+
+Будем считать, что
+
+$$
+n=km,
+$$
+
+то есть матрица полностью разбивается на \(k\times k\) блоков размера \(m\times m\)
+
+Все арифметические операции считаем равными по стоимости. Умножение на элементы матрицы \(D\), равные \(\pm1\), за отдельную операцию не считаем
+
+\subsection{Нахождение матриц \(R\) и \(D\)}
+
+\subsubsection{Диагональные блоки \(R_{ii}\) и \(D_{ii}\)}
+
+Для диагонального элемента используем формулу
+
+$$
+r_{ii}
+=
+\sqrt{
+  \left|
+  a_{ii}
+  -
+  \sum_{t=1}^{i-1}r_{ti}^{2}d_{tt}
+  \right|
+}
+$$
+
+Для вычисления суммы требуется \(i-1\) умножений и \(i-1\) вычитаний. После этого выполняется одна операция извлечения квадратного корня
+
+Следовательно, для вычисления \(r_{ii}\) требуется
+
+$$
+2(i-1)+1=2i-1
+$$
+
+операций
+
+Для внедиагонального элемента
+
+$$
+r_{ij}
+=
+\frac{
+  a_{ij}
+  -
+  \sum_{t=1}^{i-1}r_{ti}r_{tj}d_{tt}
+}{
+  r_{ii}d_{ii}
+}
+$$
+
+аналогично требуется \(i-1\) умножений, \(i-1\) вычитаний и одно деление, то есть
+
+$$
+2i-1
+$$
+
+операций
+
+В \(j\)-м столбце верхнетреугольной матрицы \(R_{ii}\) вычисляются элементы с номерами
+
+$$
+i=1,\ldots,j
+$$
+
+Поэтому количество операций для одного диагонального блока равно
+
+$$
+\sum_{j=1}^{m}\sum_{i=1}^{j}(2i-1)
+$$
+
+Так как
+
+$$
+\sum_{i=1}^{j}(2i-1)=j^2,
+$$
+
+получаем
+
+$$
+\sum_{j=1}^{m}j^2
+=
+\frac{m(m+1)(2m+1)}{6}
+$$
+
+Диагональных блоков всего \(k\), поэтому
+
+$$
+C_1
+=
+\frac{k\,m(m+1)(2m+1)}{6}
+$$
+
+\subsubsection{Внедиагональные блоки \(R_{ij}\)}
+
+Для \(i<j\) блок \(R_{ij}\) находится из уравнения
+
+$$
+R_{ii}^{T}D_{ii}R_{ij}=A_{ij},
+$$
+
+где из \(A_{ij}\) уже были вычтены вклады предыдущих блочных строк
+
+Элемент блока вычисляется по формуле
+
+$$
+(R_{ij})_{rs}
+=
+\frac{
+  (A_{ij})_{rs}
+  -
+  \sum_{t=1}^{r-1}
+  (R_{ii})_{tr}(R_{ij})_{ts}d_{tt}
+}{
+  (R_{ii})_{rr}d_{rr}
+}
+$$
+
+Для одного элемента требуется \(r-1\) умножений, \(r-1\) вычитаний и одно деление:
+
+$$
+2(r-1)+1=2r-1
+$$
+
+В каждой строке находится \(m\) элементов. Следовательно, для одного блока \(R_{ij}^{m\times m}\)
+
+$$
+C_{R_{ij}}
+=
+m\sum_{r=1}^{m}(2r-1)
+$$
+
+Поскольку
+
+$$
+\sum_{r=1}^{m}(2r-1)=m^2,
+$$
+
+имеем
+
+$$
+C_{R_{ij}}=m^3
+$$
+
+Число внедиагональных блоков верхнетреугольной матрицы равно
+
+$$
+\frac{k(k-1)}{2}
+$$
+
+Следовательно,
+
+$$
+C_2
+=
+m^3\frac{k(k-1)}{2}
+$$
+
+\subsubsection{Вычитание уже вычисленных произведений}
+
+После вычисления блока \(R_{ij}\) выполняется обновление блоков
+
+$$
+A_{rj}
+\leftarrow
+A_{rj}
+-
+R_{ir}^{T}D_{ii}R_{ij}
+$$
+
+Для одного элемента произведения имеем
+
+$$
+(R_{ir}^{T}D_{ii}R_{ij})_{pq}
+=
+\sum_{t=1}^{m}
+(R_{ir})_{tp}(R_{ij})_{tq}d_{tt}
+$$
+
+Умножение на \(d_{tt}=\pm1\) не считаем
+
+Для каждого \(t\) требуется одно умножение
+
+$$
+(R_{ir})_{tp}(R_{ij})_{tq}
+$$
+
+и одно вычитание полученного значения из элемента \(A_{rj}\)
+
+Следовательно, для одного элемента требуется
+
+$$
+2m
+$$
+
+операций
+
+В блоке \(m^2\) элементов, поэтому одно обновление блока требует
+
+$$
+2m\cdot m^2=2m^3
+$$
+
+операций
+
+Теперь посчитаем число таких обновлений
+
+Для каждого блока \(A_{ij}\), где
+
+$$
+2\le i\le j\le k,
+$$
+
+необходимо вычесть вклады всех предыдущих блочных строк:
+
+$$
+t=1,\ldots,i-1
+$$
+
+Таким образом, количество обновлений равно
+
+$$
+\sum_{i=2}^{k}
+\sum_{j=i}^{k}
+\sum_{t=1}^{i-1}1
+$$
+
+То есть
+
+$$
+\sum_{i=2}^{k}(k-i+1)(i-1)
+$$
+
+Сделаем замену \(s=i-1\):
+
+$$
+\sum_{s=1}^{k-1}s(k-s)
+=
+k\sum_{s=1}^{k-1}s
+-
+\sum_{s=1}^{k-1}s^2
+$$
+
+Отсюда
+
+$$
+\sum_{s=1}^{k-1}s(k-s)
+=
+k\frac{k(k-1)}2
+-
+\frac{k(k-1)(2k-1)}6
+=
+\frac{k(k-1)(k+1)}6
+$$
+
+Следовательно,
+
+$$
+C_3
+=
+2m^3
+\frac{k(k-1)(k+1)}6
+=
+\frac{m^3k(k-1)(k+1)}3
+$$
+
+\subsubsection{Общая сложность построения \(R\) и \(D\)}
+
+Складываем три полученных части:
+
+$$
+C_{\text{fact}}
+=
+C_1+C_2+C_3
+$$
+
+Получаем
+
+$$
+C_{\text{fact}}
+=
+\frac{k\,m(m+1)(2m+1)}6
++
+\frac{k(k-1)m^3}{2}
++
+\frac{k(k-1)(k+1)m^3}{3}
+$$
+
+Так как
+
+$$
+n=km,
+$$
+
+можно выразить результат через \(n\):
+
+$$
+C_{\text{fact}}
+=
+\frac{n^3}{3}
++
+\frac{n^2m}{2}
+-
+\frac{nm^2}{2}
++
+\frac{nm}{2}
++
+\frac{n}{6}
+$$
+
+Или компактнее:
+
+$$
+C_{\text{fact}}
+=
+\frac{n^3}{3}
++
+\frac{nm(n-m+1)}{2}
++
+\frac{n}{6}
+$$
+
+Главный член при фиксированном размере блока \(m\):
+
+$$
+C_{\text{fact}}
+\sim
+\frac{n^3}{3}
+$$
+
+\subsection{Решение системы}
+
+После получения разложения
+
+$$
+A=R^TDR
+$$
+
+решаем последовательно
+
+$$
+R^Tz=b,
+$$
+
+$$
+Dy=z,
+$$
+
+$$
+Rx=y
+$$
+
+\subsubsection{Решение \(R^Tz=b\)}
+
+Внутри одного диагонального блока имеем
+
+$$
+(z_i)_r
+=
+\frac{
+  (b_i)_r
+  -
+  \sum_{t=1}^{r-1}
+  (R_{ii}^T)_{rt}(z_i)_t
+}{
+  (R_{ii}^T)_{rr}
+}
+$$
+
+Для одного элемента требуется
+
+$$
+2(r-1)+1=2r-1
+$$
+
+операций
+
+Поэтому решение одной треугольной системы размера \(m\) требует
+
+$$
+\sum_{r=1}^{m}(2r-1)=m^2
+$$
+
+операций
+
+Таких диагональных блоков \(k\), следовательно,
+
+$$
+C_{\text{diag\,solve}}=km^2
+$$
+
+Перед решением очередного блока необходимо вычесть уже известные произведения
+
+$$
+b_i
+-
+\sum_{t=1}^{i-1}R_{ti}^{T}z_t
+$$
+
+Одно произведение матрицы размера \(m\times m\) на вектор с одновременным вычитанием требует
+
+$$
+2m^2
+$$
+
+операций
+
+Число таких произведений равно
+
+$$
+\sum_{i=2}^{k}(i-1)
+=
+\frac{k(k-1)}2
+$$
+
+Поэтому
+
+$$
+C_{\text{off\,solve}}
+=
+2m^2\frac{k(k-1)}2
+=
+m^2k(k-1)
+$$
+
+Суммарно для первого шага:
+
+$$
+C_{R^Tz=b}
+=
+km^2+m^2k(k-1)
+=
+k^2m^2
+$$
+
+Так как \(n=km\),
+
+$$
+C_{R^Tz=b}=n^2
+$$
+
+\subsubsection{Вычисление \(Dy=z\)}
+
+Матрица \(D\) диагональная и состоит из элементов \(\pm1\)
+
+По принятому правилу умножение на \(\pm1\) не считаем, поэтому
+
+$$
+C_{Dy=z}=0
+$$
+
+\subsubsection{Решение \(Rx=y\)}
+
+Вычисления полностью аналогичны первому шагу, только обход выполняется снизу вверх
+
+Поэтому
+
+$$
+C_{Rx=y}=n^2
+$$
+
+Таким образом, общая стоимость поиска решения после разложения составляет
+
+$$
+C_{\text{solve}}
+=
+2n^2
+$$
+
+\subsection{Итоговая сложность}
+
+Складываем стоимость разложения и решения:
+
+$$
+C
+=
+C_{\text{fact}}
++
+C_{\text{solve}}
+$$
+
+Получаем
+
+$$
+C
+=
+\frac{n^3}{3}
++
+\frac{n^2m}{2}
+-
+\frac{nm^2}{2}
++
+\frac{nm}{2}
++
+\frac{n}{6}
++
+2n^2
+$$
+
+То есть
+
+$$
+\boxed{
+  C
+  =
+  \frac{n^3}{3}
+  +
+  \left(\frac{m}{2}+2\right)n^2
+  -
+  \frac{m^2-m}{2}n
+  +
+  \frac{n}{6}
+}
+$$
+
+При фиксированном размере блока \(m\):
+
+$$
+\boxed{
+  C
+  =
+  \frac{n^3}{3}
+  +
+  O(n^2)
+}
+$$
+
+и, следовательно,
+
+$$
+\boxed{
+  C=O(n^3)
+}
+$$
+
+\end{document}
