@@ -2,7 +2,7 @@ FLAGS = -O3 -mfpmath=sse -fstack-protector-all -g -W -Wall -Wextra -Wunused -Wca
 
 LINK_FLAGS ?=
 
-NUMS = 1 2 3 4 5 6
+NUMS = 1 2 3 4 5 6 7 8 9
 
 OUTS = $(foreach n,$(NUMS),$(shell printf "a%02d.out\n" "$(n)"))
 

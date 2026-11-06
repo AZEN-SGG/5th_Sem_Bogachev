@@ -18,7 +18,7 @@ main (int argc, char *argv[])
   double (*d_lst[]) (double) = { d0, d1, d2, d3, d4, d5, d6 };
   int len_f = sizeof (f_lst) / sizeof (f_lst[0]);
 
-  if (!((argc == 5) && sscanf (argv[1], "%lf", &x_0) == 1
+  if (!((argc == 4) && sscanf (argv[1], "%lf", &x_0) == 1
         && (sscanf (argv[2], "%lf", &eps) == 1 && (eps >= 0))
         && ((sscanf (argv[3], "%d", &k) == 1) && ((0 <= k) && (k < len_f)))))
     {
